@@ -1,0 +1,64 @@
+{
+  "name": "@saihm/client-pro",
+  "version": "0.1.1",
+  "description": "Production client-side cryptography for SAIHM non-custodial agent memory: post-quantum (ML-DSA-65 / ML-KEM-768), per-cell AES-256-GCM, provable crypto-shred erasure (GDPR Art. 17), authenticated sharing with one-step revoke. One cell, many shapes (polymorphic). One memory layer for fleet-scale swarms of many agents — homogeneous or disparate — portable across every LLM client and surviving any single vendor's product changes. Your keys never leave the client. Pairs with @saihm/mcp-server. Join the protocol at saihm.coti.global.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist coverage",
+    "build": "npm run clean && tsc -p .",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "tsx tests/client_crypto.test.ts",
+    "prepublishOnly": "npm run build && npm run typecheck && npm test"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "saihm",
+    "post-quantum",
+    "ml-dsa",
+    "ml-kem",
+    "non-custodial",
+    "client-side-encryption",
+    "agent-memory",
+    "gdpr",
+    "crypto-shred",
+    "polymorphic-memory"
+  ],
+  "license": "Apache-2.0",
+  "author": "SAIHM",
+  "homepage": "https://saihm.coti.global",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SAIHM-Admin/saihm-client-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SAIHM-Admin/saihm-client-pro/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@noble/post-quantum": "0.6.1",
+    "@noble/ciphers": "^2.2.0",
+    "@noble/hashes": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "tsx": "^4.22.2",
+    "typescript": "^6.0.3"
+  }
+}
