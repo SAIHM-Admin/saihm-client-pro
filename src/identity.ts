@@ -42,15 +42,39 @@ export interface DeriveOpts {
  *   mlkemSeed  = HKDF(ikm=kgRoot,       info=MPS-MLKEM-ENCAP-v1,    64B)
  *   kek        = HKDF(ikm=masterSecret, info=MPS-KEK-v1,            32B)
  */
-export function deriveIdentity(masterSecret: Uint8Array, opts: DeriveOpts = {}): ClientIdentity {
+export function deriveIdentity(
+  masterSecret: Uint8Array,
+  opts: DeriveOpts = {},
+): ClientIdentity {
   if (masterSecret.length < 32) {
-    throw new Error('masterSecret must be >= 32 bytes of high-entropy material');
+    throw new Error(
+      'masterSecret must be >= 32 bytes of high-entropy material',
+    );
   }
-  const tag = opts.domainTag === undefined ? DEFAULT_DOMAIN_TAG : opts.domainTag;
+  const tag =
+    opts.domainTag === undefined ? DEFAULT_DOMAIN_TAG : opts.domainTag;
 
-  const kgRoot = hkdf(sha256, masterSecret, undefined, domainInfo(D_PQC_KEY_GEN, tag), 32);
-  const mldsaSeed = hkdf(sha256, kgRoot, undefined, domainInfo(D_AGENT_IDENTITY, tag), 32);
-  const mlkemSeed = hkdf(sha256, kgRoot, undefined, domainInfo(D_MLKEM_ENCAP, tag), 64);
+  const kgRoot = hkdf(
+    sha256,
+    masterSecret,
+    undefined,
+    domainInfo(D_PQC_KEY_GEN, tag),
+    32,
+  );
+  const mldsaSeed = hkdf(
+    sha256,
+    kgRoot,
+    undefined,
+    domainInfo(D_AGENT_IDENTITY, tag),
+    32,
+  );
+  const mlkemSeed = hkdf(
+    sha256,
+    kgRoot,
+    undefined,
+    domainInfo(D_MLKEM_ENCAP, tag),
+    64,
+  );
   const kek = hkdf(sha256, masterSecret, undefined, domainInfo(D_KEK, tag), 32);
 
   const dsa = ml_dsa65.keygen(mldsaSeed);
@@ -77,6 +101,19 @@ export function deriveIdentity(masterSecret: Uint8Array, opts: DeriveOpts = {}):
   };
 }
 
+/**
+ * Sign an opaque challenge (e.g. a SAIHM onboard nonce) with this identity's ML-DSA-65 secret key,
+ * returning the detached signature bytes. Self-onboarding clients use this to prove control of the
+ * agent identity in the endpoint's challenge/response, minting their own short-lived access token
+ * without a human pasting one. The secret key never leaves the client.
+ */
+export function signChallenge(
+  mldsaSecretKey: Uint8Array,
+  message: Uint8Array,
+): Uint8Array {
+  return ml_dsa65.sign(message, mldsaSecretKey);
+}
+
 export class KeySubstitutionError extends Error {
   constructor(message: string) {
     super(message);
@@ -90,13 +127,24 @@ export class KeySubstitutionError extends Error {
  *  (b) the self-signature MUST bind mlkemPubKey to that DSA key — defeats KEM-key substitution.
  * The self-sig ALONE proves only internal consistency; both checks are required.
  */
-export function verifyIdentityRecord(record: IdentityRecord, pinnedAgentIdHash: Uint8Array): void {
+export function verifyIdentityRecord(
+  record: IdentityRecord,
+  pinnedAgentIdHash: Uint8Array,
+): void {
   if (!ctEqual(sha256(record.mldsaPubKey), pinnedAgentIdHash)) {
     throw new KeySubstitutionError(
       'mldsaPubKey does not hash to the pinned agentIdHash (directory key substitution)',
     );
   }
-  if (!ml_dsa65.verify(record.mlkemPubKeySelfSig, record.mlkemPubKey, record.mldsaPubKey)) {
-    throw new KeySubstitutionError('mlkemPubKey self-signature invalid (substituted KEM key)');
+  if (
+    !ml_dsa65.verify(
+      record.mlkemPubKeySelfSig,
+      record.mlkemPubKey,
+      record.mldsaPubKey,
+    )
+  ) {
+    throw new KeySubstitutionError(
+      'mlkemPubKey self-signature invalid (substituted KEM key)',
+    );
   }
 }

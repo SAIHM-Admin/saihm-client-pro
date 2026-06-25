@@ -36,7 +36,11 @@ import {
   toHex,
   utf8,
 } from '../src/index.js';
-import type { BlindEnvelope, ClientIdentity, UnsignedShareEnvelope } from '../src/index.js';
+import type {
+  BlindEnvelope,
+  ClientIdentity,
+  UnsignedShareEnvelope,
+} from '../src/index.js';
 
 const FIXED_NOW = 1_700_000_000_000n;
 const PT = utf8('non-custodial encrypted memory cell payload');
@@ -44,7 +48,12 @@ const PT = utf8('non-custodial encrypted memory cell payload');
 function secret(byte: number): Uint8Array {
   return new Uint8Array(32).fill(byte);
 }
-function seal(id: ClientIdentity, cellId: string, seq: bigint, pt: Uint8Array = PT): BlindEnvelope {
+function seal(
+  id: ClientIdentity,
+  cellId: string,
+  seq: bigint,
+  pt: Uint8Array = PT,
+): BlindEnvelope {
   return sealCell({
     plaintext: pt,
     kek: id.kek,
@@ -197,7 +206,10 @@ test('NT4: destroying the SAIHM-side wrappedDek renders the cell undecryptable (
   const env = seal(a, 'cell-forget', 1n);
   assert.deepEqual(openCell(env, a.kek), PT); // control: openable while wDEK exists
   // `forget` = SAIHM destroys the wrappedDek store entry. Model as a zeroed/absent entry.
-  const shredded: BlindEnvelope = { ...env, wrappedDek: new Uint8Array(env.wrappedDek.length) };
+  const shredded: BlindEnvelope = {
+    ...env,
+    wrappedDek: new Uint8Array(env.wrappedDek.length),
+  };
   // Even WITH the correct client KEK, the random DEK is gone — nothing can reconstruct it.
   assert.throws(() => unwrapDek(shredded, a.kek));
   assert.throws(() => openCell(shredded, a.kek));
@@ -227,7 +239,10 @@ test('NT6: a validly-signed envelope whose commitmentHash lies about the ciphert
   const env = seal(a, 'cell-commit', 1n);
   assert.equal(verifyEnvelope(env), true); // honest control
   // Forge: keep the ciphertext, set a wrong commitmentHash, and RE-SIGN with the real key.
-  const lying = { ...env, publicMeta: { ...env.publicMeta, commitmentHash: new Uint8Array(32) } };
+  const lying = {
+    ...env,
+    publicMeta: { ...env.publicMeta, commitmentHash: new Uint8Array(32) },
+  };
   const mldsaSig = ml_dsa65.sign(serializeForSigning(lying), a.mldsaSecretKey);
   const signedLie: BlindEnvelope = { ...lying, mldsaSig };
   // The signature is valid over the lie, but verifyEnvelope binds commitmentHash to the ciphertext.
@@ -241,9 +256,15 @@ test('NT7: a share falsely claiming another agent as sharer is rejected (fail cl
   const evil = deriveIdentity(secret(0xee)); // attacker E (cannot sign as A)
   // E crafts a share that decapsulates for B but claims sharerAgentIdHash = A.
   const evilDek = randomBytes(32);
-  const { cipherText: kemCipherText, sharedSecret } = ml_kem768.encapsulate(b.mlkemPubKey);
+  const { cipherText: kemCipherText, sharedSecret } = ml_kem768.encapsulate(
+    b.mlkemPubKey,
+  );
   const wrapNonce = randomBytes(12);
-  const aad = shareAad({ sharerAgentIdHash: a.agentIdHash, recipientAgentIdHash: b.agentIdHash, cellId: 'x' });
+  const aad = shareAad({
+    sharerAgentIdHash: a.agentIdHash,
+    recipientAgentIdHash: b.agentIdHash,
+    cellId: 'x',
+  });
   const wrappedDek = gcm(sharedSecret, wrapNonce, aad).encrypt(evilDek);
   const unsigned: UnsignedShareEnvelope = {
     schemaVer: SCHEMA_SHARE,
@@ -255,7 +276,13 @@ test('NT7: a share falsely claiming another agent as sharer is rejected (fail cl
     wrappedDek,
   };
   // E can only sign with E's own key — it does not hold A's secret key.
-  const forged = { ...unsigned, sharerSig: ml_dsa65.sign(serializeShareForSigning(unsigned), evil.mldsaSecretKey) };
+  const forged = {
+    ...unsigned,
+    sharerSig: ml_dsa65.sign(
+      serializeShareForSigning(unsigned),
+      evil.mldsaSecretKey,
+    ),
+  };
   assert.throws(
     () =>
       unwrapSharedDek({
@@ -275,10 +302,20 @@ test('NT8: out-of-range seq/createdAt are rejected at decode, and verifyEnvelope
   const w = encodeEnvelope(env);
   // decodeEnvelope rejects out-of-uint64 / negative / non-integer seq + createdAt as malformed wire.
   assert.throws(() => decodeEnvelope({ ...w, seq: '-1' }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, seq: (2n ** 64n).toString() }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, seq: 'not-a-number' }), WireFormatError);
   assert.throws(
-    () => decodeEnvelope({ ...w, publicMeta: { ...w.publicMeta, createdAt: '-1' } }),
+    () => decodeEnvelope({ ...w, seq: (2n ** 64n).toString() }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeEnvelope({ ...w, seq: 'not-a-number' }),
+    WireFormatError,
+  );
+  assert.throws(
+    () =>
+      decodeEnvelope({
+        ...w,
+        publicMeta: { ...w.publicMeta, createdAt: '-1' },
+      }),
     WireFormatError,
   );
   // Defense in depth: even a directly-constructed envelope with an out-of-range seq makes the
@@ -302,21 +339,46 @@ test('NT9: malformed / non-canonical hex byte-fields are rejected at decode with
   // Each hex byte-field must reject odd-length, non-hex, uppercase, whitespace, sign, and 0x forms
   // as malformed wire — a single typed WireFormatError at the parse boundary, never an untyped throw.
   for (const bad of ['abc', 'zz', '1g', 'AB', ' a', '-1', '0x01']) {
-    assert.throws(() => decodeEnvelope({ ...w, agentIdHash: bad }), WireFormatError);
-    assert.throws(() => decodeEnvelope({ ...w, ciphertext: bad }), WireFormatError);
-    assert.throws(() => decodeEnvelope({ ...w, nonce: bad }), WireFormatError);
-    assert.throws(() => decodeEnvelope({ ...w, wrappedDek: bad }), WireFormatError);
-    assert.throws(() => decodeEnvelope({ ...w, mldsaPubKey: bad }), WireFormatError);
-    assert.throws(() => decodeEnvelope({ ...w, mldsaSig: bad }), WireFormatError);
     assert.throws(
-      () => decodeEnvelope({ ...w, publicMeta: { ...w.publicMeta, commitmentHash: bad } }),
+      () => decodeEnvelope({ ...w, agentIdHash: bad }),
+      WireFormatError,
+    );
+    assert.throws(
+      () => decodeEnvelope({ ...w, ciphertext: bad }),
+      WireFormatError,
+    );
+    assert.throws(() => decodeEnvelope({ ...w, nonce: bad }), WireFormatError);
+    assert.throws(
+      () => decodeEnvelope({ ...w, wrappedDek: bad }),
+      WireFormatError,
+    );
+    assert.throws(
+      () => decodeEnvelope({ ...w, mldsaPubKey: bad }),
+      WireFormatError,
+    );
+    assert.throws(
+      () => decodeEnvelope({ ...w, mldsaSig: bad }),
+      WireFormatError,
+    );
+    assert.throws(
+      () =>
+        decodeEnvelope({
+          ...w,
+          publicMeta: { ...w.publicMeta, commitmentHash: bad },
+        }),
       WireFormatError,
     );
   }
   // Fixed-size byte fields reject valid-hex-but-WRONG-LENGTH input at decode (ahead of the signature).
-  assert.throws(() => decodeEnvelope({ ...w, agentIdHash: 'aa' }), WireFormatError);
+  assert.throws(
+    () => decodeEnvelope({ ...w, agentIdHash: 'aa' }),
+    WireFormatError,
+  );
   assert.throws(() => decodeEnvelope({ ...w, nonce: 'aabb' }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, mldsaPubKey: 'aabbcc' }), WireFormatError);
+  assert.throws(
+    () => decodeEnvelope({ ...w, mldsaPubKey: 'aabbcc' }),
+    WireFormatError,
+  );
   // The honest, canonical encoding still round-trips and verifies.
   assert.equal(verifyEnvelope(decodeEnvelope(w)), true);
 });
@@ -346,7 +408,10 @@ test('NT10: verifyShareSig fails closed on a malformed pubkey; openCellWithDek r
   assert.equal(res, false);
   assert.equal(verifyShareSig(share, a.mldsaPubKey), true); // genuine pubkey still verifies (control)
   // openCellWithDek rejects a short DEK before any GCM call (no silent AES-128/192 downgrade).
-  assert.throws(() => openCellWithDek(envA, new Uint8Array(16)), /dek must be 32 bytes/);
+  assert.throws(
+    () => openCellWithDek(envA, new Uint8Array(16)),
+    /dek must be 32 bytes/,
+  );
 });
 
 // ─── NT11: structural / wrong-type wire is rejected with WireFormatError (no untyped TypeError) ───
@@ -355,18 +420,40 @@ test('NT11: null/absent publicMeta, a null body, and non-string fields are rejec
   const w = encodeEnvelope(seal(a, 'cell-struct', 1n));
   // Structural malformation must surface as the single typed WireFormatError — the blind server
   // wraps decode and treats WireFormatError as a 4xx reject; an untyped TypeError would be a 500/DoS.
-  assert.throws(() => decodeEnvelope({ ...w, publicMeta: null as any }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, publicMeta: undefined as any }), WireFormatError);
+  assert.throws(
+    () => decodeEnvelope({ ...w, publicMeta: null as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeEnvelope({ ...w, publicMeta: undefined as any }),
+    WireFormatError,
+  );
   assert.throws(() => decodeEnvelope(null as any), WireFormatError);
   // Wrong JSON type (number / object where a string is required) is rejected, not coerced.
-  assert.throws(() => decodeEnvelope({ ...w, schemaVer: 123 as any }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, cellId: 123 as any }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, agentIdHash: 0 as any }), WireFormatError);
+  assert.throws(
+    () => decodeEnvelope({ ...w, schemaVer: 123 as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeEnvelope({ ...w, cellId: 123 as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeEnvelope({ ...w, agentIdHash: 0 as any }),
+    WireFormatError,
+  );
   // JSON numbers for integer fields are rejected (incl. >=2^53 — no silent precision loss).
   assert.throws(() => decodeEnvelope({ ...w, seq: 1 as any }), WireFormatError);
-  assert.throws(() => decodeEnvelope({ ...w, seq: (2 ** 53 + 1) as any }), WireFormatError);
   assert.throws(
-    () => decodeEnvelope({ ...w, publicMeta: { ...w.publicMeta, createdAt: 5 as any } }),
+    () => decodeEnvelope({ ...w, seq: (2 ** 53 + 1) as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () =>
+      decodeEnvelope({
+        ...w,
+        publicMeta: { ...w.publicMeta, createdAt: 5 as any },
+      }),
     WireFormatError,
   );
   // Honest, well-typed wire still round-trips and verifies.
@@ -398,11 +485,26 @@ test('NT12: share envelope encode/decode round-trips and rejects malformed/wrong
   // The blind server keys its share-store on these fields, so malformed share JSON must surface a
   // single typed WireFormatError, never an untyped throw.
   assert.throws(() => decodeShareEnvelope(null as any), WireFormatError);
-  assert.throws(() => decodeShareEnvelope({ ...w, sharerAgentIdHash: null as any }), WireFormatError);
-  assert.throws(() => decodeShareEnvelope({ ...w, cellId: 123 as any }), WireFormatError);
-  assert.throws(() => decodeShareEnvelope({ ...w, kemCipherText: 'zz' }), WireFormatError); // non-hex
-  assert.throws(() => decodeShareEnvelope({ ...w, kemCipherText: 'aa' }), WireFormatError); // wrong length
-  assert.throws(() => decodeShareEnvelope({ ...w, sharerSig: w.sharerSig.toUpperCase() }), WireFormatError); // uppercase
+  assert.throws(
+    () => decodeShareEnvelope({ ...w, sharerAgentIdHash: null as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeShareEnvelope({ ...w, cellId: 123 as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeShareEnvelope({ ...w, kemCipherText: 'zz' }),
+    WireFormatError,
+  ); // non-hex
+  assert.throws(
+    () => decodeShareEnvelope({ ...w, kemCipherText: 'aa' }),
+    WireFormatError,
+  ); // wrong length
+  assert.throws(
+    () => decodeShareEnvelope({ ...w, sharerSig: w.sharerSig.toUpperCase() }),
+    WireFormatError,
+  ); // uppercase
 });
 
 // ─── NT13: identity-record JSON transport — canonical, totally validated, round-trips ───
@@ -415,11 +517,24 @@ test('NT13: identity record encode/decode round-trips and rejects malformed/wron
   assert.equal(toHex(decoded.mldsaPubKey), toHex(a.identityRecord.mldsaPubKey));
   // Malformed directory JSON must surface a single typed WireFormatError, never an untyped throw.
   assert.throws(() => decodeIdentityRecord(null as any), WireFormatError);
-  assert.throws(() => decodeIdentityRecord({ ...w, mldsaPubKey: 5 as any }), WireFormatError);
-  assert.throws(() => decodeIdentityRecord({ ...w, mlkemPubKey: 'zz' }), WireFormatError); // non-hex
-  assert.throws(() => decodeIdentityRecord({ ...w, mlkemPubKey: 'aa' }), WireFormatError); // wrong length
   assert.throws(
-    () => decodeIdentityRecord({ ...w, mlkemPubKeySelfSig: w.mlkemPubKeySelfSig.toUpperCase() }),
+    () => decodeIdentityRecord({ ...w, mldsaPubKey: 5 as any }),
+    WireFormatError,
+  );
+  assert.throws(
+    () => decodeIdentityRecord({ ...w, mlkemPubKey: 'zz' }),
+    WireFormatError,
+  ); // non-hex
+  assert.throws(
+    () => decodeIdentityRecord({ ...w, mlkemPubKey: 'aa' }),
+    WireFormatError,
+  ); // wrong length
+  assert.throws(
+    () =>
+      decodeIdentityRecord({
+        ...w,
+        mlkemPubKeySelfSig: w.mlkemPubKeySelfSig.toUpperCase(),
+      }),
     WireFormatError,
   );
 });

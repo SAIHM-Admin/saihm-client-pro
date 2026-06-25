@@ -29,8 +29,14 @@ npm install @saihm/client-pro
 
 ```ts
 import {
-  deriveIdentity, sealCell, verifyEnvelope, openCell,
-  shareCell, unwrapSharedDek, openCellWithDek, verifyIdentityRecord,
+  deriveIdentity,
+  sealCell,
+  verifyEnvelope,
+  openCell,
+  shareCell,
+  unwrapSharedDek,
+  openCellWithDek,
+  verifyIdentityRecord,
 } from '@saihm/client-pro';
 
 // 1. Derive a deterministic identity from a >=32-byte master secret you hold.
@@ -42,8 +48,13 @@ const me = deriveIdentity(myMasterSecret);
 // 2. Encrypt a cell. `seq` is the server-issued monotonic counter for this cell.
 const env = sealCell({
   plaintext: new TextEncoder().encode('remember this'),
-  kek: me.kek, mldsaSecretKey: me.mldsaSecretKey, mldsaPubKey: me.mldsaPubKey,
-  agentIdHash: me.agentIdHash, cellId: 'note-1', seq: 1n, tier: 'PRO',
+  kek: me.kek,
+  mldsaSecretKey: me.mldsaSecretKey,
+  mldsaPubKey: me.mldsaPubKey,
+  agentIdHash: me.agentIdHash,
+  cellId: 'note-1',
+  seq: 1n,
+  tier: 'PRO',
 });
 // `env` is the blind envelope SAIHM stores. SAIHM can verifyEnvelope(env) but cannot open it.
 
@@ -54,8 +65,12 @@ const plaintext = openCell(env, me.kek);
 //    Pin the recipient's agentIdHash out-of-band; the library rejects directory key-substitution.
 verifyIdentityRecord(recipientRecord, recipientAgentIdHash); // throws KeySubstitutionError on tamper
 const share = shareCell({
-  envelope: env, sharerKek: me.kek, sharerMldsaSecretKey: me.mldsaSecretKey,
-  sharerAgentIdHash: me.agentIdHash, recipientRecord, recipientPinnedAgentIdHash: recipientAgentIdHash,
+  envelope: env,
+  sharerKek: me.kek,
+  sharerMldsaSecretKey: me.mldsaSecretKey,
+  sharerAgentIdHash: me.agentIdHash,
+  recipientRecord,
+  recipientPinnedAgentIdHash: recipientAgentIdHash,
 });
 // recipient side (the grantee holds its own identity `recipient`; the sharer's ML-DSA public key
 // is pinned out-of-band as `sharerPinnedMldsaPubKey` — sharer authentication is mandatory):
@@ -70,14 +85,14 @@ const shared = openCellWithDek(env, dek);
 
 ## Security model
 
-| Property | Guarantee |
-|---|---|
-| Confidentiality vs SAIHM | SAIHM holds ciphertext + wrapped DEKs + public keys only; no key able to decrypt. |
-| Integrity / authenticity | Every envelope is ML-DSA-65-signed over its full contents, including the sequence number. |
-| Anti-replay / rollback | The signed, server-issued monotonic `seq` is rejected server-side if not strictly increasing. |
-| Tenant isolation | State is namespaced by the public `agentIdHash`; a different secret yields a different KEK and namespace. |
-| Authenticated sharing | Recipient public keys are pinned out-of-band and checked before any secret is bound to them. |
-| Erasure | Destroying the SAIHM-side wrapped DEK crypto-shreds the cell. |
+| Property                 | Guarantee                                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Confidentiality vs SAIHM | SAIHM holds ciphertext + wrapped DEKs + public keys only; no key able to decrypt.                         |
+| Integrity / authenticity | Every envelope is ML-DSA-65-signed over its full contents, including the sequence number.                 |
+| Anti-replay / rollback   | The signed, server-issued monotonic `seq` is rejected server-side if not strictly increasing.             |
+| Tenant isolation         | State is namespaced by the public `agentIdHash`; a different secret yields a different KEK and namespace. |
+| Authenticated sharing    | Recipient public keys are pinned out-of-band and checked before any secret is bound to them.              |
+| Erasure                  | Destroying the SAIHM-side wrapped DEK crypto-shreds the cell.                                             |
 
 AES-256-GCM wrap operations use random 96-bit nonces under a reused KEK, well within
 NIST SP 800-38D guidance for realistic per-identity write volumes. ML-DSA signatures are hedged
@@ -116,10 +131,10 @@ for CISOs, DPOs, and anyone comparing AI-memory tools.
 
 ## Two packages
 
-| Package | Use it for |
-|---|---|
-| **`@saihm/client-pro`** (this package) | Production client-side cryptography: sealing, opening, authenticated sharing, and provable erasure — performed on your machine. |
-| [`@saihm/mcp-server`](https://www.npmjs.com/package/@saihm/mcp-server) | The open MCP client that exposes the eight SAIHM tools to any MCP-capable AI agent. |
+| Package                                                                | Use it for                                                                                                                      |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **`@saihm/client-pro`** (this package)                                 | Production client-side cryptography: sealing, opening, authenticated sharing, and provable erasure — performed on your machine. |
+| [`@saihm/mcp-server`](https://www.npmjs.com/package/@saihm/mcp-server) | The open MCP client that exposes the eight SAIHM tools to any MCP-capable AI agent.                                             |
 
 ## Learn more
 

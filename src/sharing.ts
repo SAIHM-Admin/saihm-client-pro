@@ -12,7 +12,12 @@ import { ctEqual } from './bytes.js';
 import { verifyIdentityRecord } from './identity.js';
 import { unwrapDek } from './cell.js';
 import { SCHEMA_SHARE, serializeShareForSigning, shareAad } from './wire.js';
-import type { BlindEnvelope, IdentityRecord, ShareEnvelope, UnsignedShareEnvelope } from './wire.js';
+import type {
+  BlindEnvelope,
+  IdentityRecord,
+  ShareEnvelope,
+  UnsignedShareEnvelope,
+} from './wire.js';
 
 /** Thrown when a share fails recipient-side authentication (forged/unauthenticated provenance). */
 export class ShareAuthError extends Error {
@@ -39,7 +44,9 @@ export function shareCell(p: ShareParams): ShareEnvelope {
 
   const dek = unwrapDek(p.envelope, p.sharerKek);
   try {
-    const { cipherText: kemCipherText, sharedSecret } = ml_kem768.encapsulate(p.recipientRecord.mlkemPubKey);
+    const { cipherText: kemCipherText, sharedSecret } = ml_kem768.encapsulate(
+      p.recipientRecord.mlkemPubKey,
+    );
     try {
       const wrapNonce = randomBytes(GCM_NONCE_BYTES);
       const aad = shareAad({
@@ -57,7 +64,10 @@ export function shareCell(p: ShareParams): ShareEnvelope {
         wrapNonce,
         wrappedDek,
       };
-      const sharerSig = ml_dsa65.sign(serializeShareForSigning(unsigned), p.sharerMldsaSecretKey);
+      const sharerSig = ml_dsa65.sign(
+        serializeShareForSigning(unsigned),
+        p.sharerMldsaSecretKey,
+      );
       return { ...unsigned, sharerSig };
     } finally {
       sharedSecret.fill(0);
@@ -87,17 +97,34 @@ export interface UnwrapShareParams {
 export function unwrapSharedDek(p: UnwrapShareParams): Uint8Array {
   const { share } = p;
   if (!ctEqual(share.recipientAgentIdHash, p.recipientAgentIdHash)) {
-    throw new ShareAuthError('share recipientAgentIdHash does not match this agent');
+    throw new ShareAuthError(
+      'share recipientAgentIdHash does not match this agent',
+    );
   }
   if (!ctEqual(sha256(p.sharerPinnedMldsaPubKey), share.sharerAgentIdHash)) {
-    throw new ShareAuthError('sharerAgentIdHash does not match the pinned sharer public key');
+    throw new ShareAuthError(
+      'sharerAgentIdHash does not match the pinned sharer public key',
+    );
   }
-  if (!ml_dsa65.verify(share.sharerSig, serializeShareForSigning(share), p.sharerPinnedMldsaPubKey)) {
-    throw new ShareAuthError('sharer signature invalid (unauthenticated or forged share)');
+  if (
+    !ml_dsa65.verify(
+      share.sharerSig,
+      serializeShareForSigning(share),
+      p.sharerPinnedMldsaPubKey,
+    )
+  ) {
+    throw new ShareAuthError(
+      'sharer signature invalid (unauthenticated or forged share)',
+    );
   }
-  const sharedSecret = ml_kem768.decapsulate(share.kemCipherText, p.recipientMlkemSecretKey);
+  const sharedSecret = ml_kem768.decapsulate(
+    share.kemCipherText,
+    p.recipientMlkemSecretKey,
+  );
   try {
-    return gcm(sharedSecret, share.wrapNonce, shareAad(share)).decrypt(share.wrappedDek);
+    return gcm(sharedSecret, share.wrapNonce, shareAad(share)).decrypt(
+      share.wrappedDek,
+    );
   } finally {
     sharedSecret.fill(0);
   }
@@ -105,9 +132,16 @@ export function unwrapSharedDek(p: UnwrapShareParams): Uint8Array {
 
 /** Standalone sharer-signature check (the same check unwrapSharedDek enforces internally).
  *  Total predicate: a malformed/wrong-length public key or signature returns false, never throws. */
-export function verifyShareSig(share: ShareEnvelope, sharerMldsaPubKey: Uint8Array): boolean {
+export function verifyShareSig(
+  share: ShareEnvelope,
+  sharerMldsaPubKey: Uint8Array,
+): boolean {
   try {
-    return ml_dsa65.verify(share.sharerSig, serializeShareForSigning(share), sharerMldsaPubKey);
+    return ml_dsa65.verify(
+      share.sharerSig,
+      serializeShareForSigning(share),
+      sharerMldsaPubKey,
+    );
   } catch {
     return false;
   }

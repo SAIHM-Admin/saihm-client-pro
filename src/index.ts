@@ -1,6 +1,6 @@
 // @saihm/client-pro — public surface.
 // Client-side envelope cryptography for SAIHM non-custodial memory. Clean-room: built only on
-// @noble/* primitives; contains NO SAIHM sealed-core code. The customer master secret, the KEK,
+// @noble/* primitives; contains NO server-side code. The customer master secret, the KEK,
 // and plaintext DEKs never leave this library.
 
 export {
@@ -55,13 +55,29 @@ export type {
   WireIdentityRecord,
 } from './wire.js';
 
-export { deriveIdentity, verifyIdentityRecord, KeySubstitutionError } from './identity.js';
+export {
+  deriveIdentity,
+  signChallenge,
+  verifyIdentityRecord,
+  KeySubstitutionError,
+} from './identity.js';
 export type { ClientIdentity, DeriveOpts } from './identity.js';
 
-export { sealCell, verifyEnvelope, unwrapDek, openCell, openCellWithDek } from './cell.js';
+export {
+  sealCell,
+  verifyEnvelope,
+  unwrapDek,
+  openCell,
+  openCellWithDek,
+} from './cell.js';
 export type { SealParams } from './cell.js';
 
-export { shareCell, unwrapSharedDek, verifyShareSig, ShareAuthError } from './sharing.js';
+export {
+  shareCell,
+  unwrapSharedDek,
+  verifyShareSig,
+  ShareAuthError,
+} from './sharing.js';
 export type { ShareParams, UnwrapShareParams } from './sharing.js';
 
 export { acceptSeq, SeqHighWaterMark } from './seq.js';

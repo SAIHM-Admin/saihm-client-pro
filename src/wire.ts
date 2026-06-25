@@ -56,7 +56,12 @@ export function cellAad(e: {
   seq: bigint;
   schemaVer: string;
 }): Uint8Array {
-  return concatLP(e.agentIdHash, utf8(e.cellId), u64be(e.seq), utf8(e.schemaVer));
+  return concatLP(
+    e.agentIdHash,
+    utf8(e.cellId),
+    u64be(e.seq),
+    utf8(e.schemaVer),
+  );
 }
 
 /** AAD binding a wrapped DEK to (agent, cell, seq, schema). */
@@ -66,7 +71,12 @@ export function wrapAad(e: {
   seq: bigint;
   schemaVer: string;
 }): Uint8Array {
-  return concatLP(e.agentIdHash, utf8(e.cellId), u64be(e.seq), utf8(e.schemaVer));
+  return concatLP(
+    e.agentIdHash,
+    utf8(e.cellId),
+    u64be(e.seq),
+    utf8(e.schemaVer),
+  );
 }
 
 // ── Identity record (published to SAIHM's untrusted directory) ─────────────────
@@ -172,8 +182,10 @@ const LEN_WRAPPED_DEK_SHARE = 48; // 32 dek + 16 tag
 
 /** Parse a canonical decimal-string uint64; reject any non-canonical or out-of-range value as malformed wire. */
 function parseU64(s: string, field: string): bigint {
-  if (typeof s !== 'string') throw new WireFormatError(`${field} must be a decimal string`);
-  if (!CANONICAL_U64.test(s)) throw new WireFormatError(`${field} is not a canonical decimal uint64`);
+  if (typeof s !== 'string')
+    throw new WireFormatError(`${field} must be a decimal string`);
+  if (!CANONICAL_U64.test(s))
+    throw new WireFormatError(`${field} is not a canonical decimal uint64`);
   const v = BigInt(s);
   if (v > U64_MAX) throw new WireFormatError(`${field} out of uint64 range`);
   return v;
@@ -182,7 +194,8 @@ function parseU64(s: string, field: string): bigint {
 /** Decode a canonical lowercase-hex wire field, surfacing any malformation as WireFormatError
  *  (so the blind server's decode boundary throws ONE typed error class, never an untyped Error). */
 function hexField(s: string, field: string, expectedLen?: number): Uint8Array {
-  if (typeof s !== 'string') throw new WireFormatError(`${field} must be a lowercase-hex string`);
+  if (typeof s !== 'string')
+    throw new WireFormatError(`${field} must be a lowercase-hex string`);
   let bytes: Uint8Array;
   try {
     bytes = fromHex(s);
@@ -198,7 +211,8 @@ function hexField(s: string, field: string, expectedLen?: number): Uint8Array {
 /** Pass-through string wire field — validated to be a string (the JSON wire type); content is
  *  not constrained (its integrity rests on the signature), but a non-string is malformed wire. */
 function strField(s: string, field: string): string {
-  if (typeof s !== 'string') throw new WireFormatError(`${field} must be a string`);
+  if (typeof s !== 'string')
+    throw new WireFormatError(`${field} must be a string`);
   return s;
 }
 
@@ -222,7 +236,11 @@ export function decodeEnvelope(w: WireEnvelope): BlindEnvelope {
       publicMeta: {
         tier: strField(w.publicMeta.tier, 'tier'),
         createdAt: parseU64(w.publicMeta.createdAt, 'createdAt'),
-        commitmentHash: hexField(w.publicMeta.commitmentHash, 'commitmentHash', LEN_HASH),
+        commitmentHash: hexField(
+          w.publicMeta.commitmentHash,
+          'commitmentHash',
+          LEN_HASH,
+        ),
       },
     };
   } catch (e) {
@@ -253,7 +271,11 @@ export function decodeIdentityRecord(w: WireIdentityRecord): IdentityRecord {
     return {
       mldsaPubKey: hexField(w.mldsaPubKey, 'mldsaPubKey', LEN_MLDSA_PUB),
       mlkemPubKey: hexField(w.mlkemPubKey, 'mlkemPubKey', LEN_MLKEM_PUB),
-      mlkemPubKeySelfSig: hexField(w.mlkemPubKeySelfSig, 'mlkemPubKeySelfSig', LEN_MLDSA_SIG),
+      mlkemPubKeySelfSig: hexField(
+        w.mlkemPubKeySelfSig,
+        'mlkemPubKeySelfSig',
+        LEN_MLDSA_SIG,
+      ),
     };
   } catch (e) {
     if (e instanceof WireFormatError) throw e;
@@ -295,8 +317,16 @@ export function decodeShareEnvelope(w: WireShareEnvelope): ShareEnvelope {
     return {
       schemaVer: strField(w.schemaVer, 'schemaVer'),
       cellId: strField(w.cellId, 'cellId'),
-      sharerAgentIdHash: hexField(w.sharerAgentIdHash, 'sharerAgentIdHash', LEN_HASH),
-      recipientAgentIdHash: hexField(w.recipientAgentIdHash, 'recipientAgentIdHash', LEN_HASH),
+      sharerAgentIdHash: hexField(
+        w.sharerAgentIdHash,
+        'sharerAgentIdHash',
+        LEN_HASH,
+      ),
+      recipientAgentIdHash: hexField(
+        w.recipientAgentIdHash,
+        'recipientAgentIdHash',
+        LEN_HASH,
+      ),
       kemCipherText: hexField(w.kemCipherText, 'kemCipherText', LEN_MLKEM_CT),
       wrapNonce: hexField(w.wrapNonce, 'wrapNonce', LEN_GCM_NONCE),
       wrappedDek: hexField(w.wrappedDek, 'wrappedDek', LEN_WRAPPED_DEK_SHARE),

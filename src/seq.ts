@@ -6,7 +6,10 @@
 // rollback to stale content and re-instatement of a forgotten cell.
 
 /** Accept iff `incoming` strictly exceeds the current high-water mark (or it is the first write). */
-export function acceptSeq(current: bigint | undefined, incoming: bigint): boolean {
+export function acceptSeq(
+  current: bigint | undefined,
+  incoming: bigint,
+): boolean {
   if (incoming < 0n) return false;
   if (current === undefined) return true;
   return incoming > current;

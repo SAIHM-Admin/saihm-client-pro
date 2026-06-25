@@ -34,13 +34,20 @@ export function sealCell(p: SealParams): BlindEnvelope {
   if (!ctEqual(sha256(p.mldsaPubKey), p.agentIdHash)) {
     throw new Error('agentIdHash must equal sha256(mldsaPubKey)');
   }
-  if (p.kek.length !== KEK_BYTES) throw new Error('kek must be 32 bytes (AES-256)');
+  if (p.kek.length !== KEK_BYTES)
+    throw new Error('kek must be 32 bytes (AES-256)');
   const dek = randomBytes(DEK_BYTES);
   try {
     // Nonce = HKDF of the random, single-use DEK => unique per encryption. The DEK is the only
     // keying input and is never reused, so the bare domain string (no separation tag) is
     // sufficient here: no cross-derivation collision is possible.
-    const nonce = hkdf(sha256, dek, undefined, utf8(D_SHARD_NONCE), GCM_NONCE_BYTES);
+    const nonce = hkdf(
+      sha256,
+      dek,
+      undefined,
+      utf8(D_SHARD_NONCE),
+      GCM_NONCE_BYTES,
+    );
     const aad = cellAad({
       agentIdHash: p.agentIdHash,
       cellId: p.cellId,
@@ -54,7 +61,12 @@ export function sealCell(p: SealParams): BlindEnvelope {
     const wDekCt = gcm(
       p.kek,
       wrapNonce,
-      wrapAad({ agentIdHash: p.agentIdHash, cellId: p.cellId, seq: p.seq, schemaVer: SCHEMA_ENV }),
+      wrapAad({
+        agentIdHash: p.agentIdHash,
+        cellId: p.cellId,
+        seq: p.seq,
+        schemaVer: SCHEMA_ENV,
+      }),
     ).encrypt(dek);
     const wrappedDek = concat(wrapNonce, wDekCt);
 
@@ -74,7 +86,10 @@ export function sealCell(p: SealParams): BlindEnvelope {
       mldsaPubKey: p.mldsaPubKey,
       publicMeta,
     };
-    const mldsaSig = ml_dsa65.sign(serializeForSigning(unsigned), p.mldsaSecretKey);
+    const mldsaSig = ml_dsa65.sign(
+      serializeForSigning(unsigned),
+      p.mldsaSecretKey,
+    );
     return { ...unsigned, mldsaSig };
   } finally {
     dek.fill(0); // best-effort scrub; the returned envelope never references `dek`
@@ -93,7 +108,8 @@ export function sealCell(p: SealParams): BlindEnvelope {
 export function verifyEnvelope(e: BlindEnvelope): boolean {
   try {
     if (!ctEqual(sha256(e.mldsaPubKey), e.agentIdHash)) return false;
-    if (!ml_dsa65.verify(e.mldsaSig, serializeForSigning(e), e.mldsaPubKey)) return false;
+    if (!ml_dsa65.verify(e.mldsaSig, serializeForSigning(e), e.mldsaPubKey))
+      return false;
     return ctEqual(sha256(e.ciphertext), e.publicMeta.commitmentHash);
   } catch {
     // Total predicate over UNTRUSTED input: any malformed field (e.g. an out-of-uint64 seq or
@@ -105,21 +121,34 @@ export function verifyEnvelope(e: BlindEnvelope): boolean {
 
 /** Unwrap the per-cell DEK using the client-held KEK. CLIENT-SIDE ONLY. Throws on wrong KEK. */
 export function unwrapDek(e: BlindEnvelope, kek: Uint8Array): Uint8Array {
-  if (kek.length !== KEK_BYTES) throw new Error('kek must be 32 bytes (AES-256)');
-  if (e.wrappedDek.length <= GCM_NONCE_BYTES) throw new Error('wrappedDek too short / destroyed');
+  if (kek.length !== KEK_BYTES)
+    throw new Error('kek must be 32 bytes (AES-256)');
+  if (e.wrappedDek.length <= GCM_NONCE_BYTES)
+    throw new Error('wrappedDek too short / destroyed');
   const wrapNonce = e.wrappedDek.subarray(0, GCM_NONCE_BYTES);
   const wDekCt = e.wrappedDek.subarray(GCM_NONCE_BYTES);
   return gcm(
     kek,
     wrapNonce,
-    wrapAad({ agentIdHash: e.agentIdHash, cellId: e.cellId, seq: e.seq, schemaVer: e.schemaVer }),
+    wrapAad({
+      agentIdHash: e.agentIdHash,
+      cellId: e.cellId,
+      seq: e.seq,
+      schemaVer: e.schemaVer,
+    }),
   ).decrypt(wDekCt);
 }
 
 /** Open with a known DEK (recipient path after share-unwrap; or owner after unwrapDek). */
 export function openCellWithDek(e: BlindEnvelope, dek: Uint8Array): Uint8Array {
-  if (dek.length !== DEK_BYTES) throw new Error('dek must be 32 bytes (AES-256)');
-  const aad = cellAad({ agentIdHash: e.agentIdHash, cellId: e.cellId, seq: e.seq, schemaVer: e.schemaVer });
+  if (dek.length !== DEK_BYTES)
+    throw new Error('dek must be 32 bytes (AES-256)');
+  const aad = cellAad({
+    agentIdHash: e.agentIdHash,
+    cellId: e.cellId,
+    seq: e.seq,
+    schemaVer: e.schemaVer,
+  });
   return gcm(dek, e.nonce, aad).decrypt(e.ciphertext);
 }
 

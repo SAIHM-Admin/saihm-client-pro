@@ -24,14 +24,16 @@ export function concat(...parts: Uint8Array[]): Uint8Array {
 }
 
 export function u32be(n: number): Uint8Array {
-  if (!Number.isInteger(n) || n < 0 || n > 0xffffffff) throw new RangeError(`u32be out of range: ${n}`);
+  if (!Number.isInteger(n) || n < 0 || n > 0xffffffff)
+    throw new RangeError(`u32be out of range: ${n}`);
   const b = new Uint8Array(4);
   new DataView(b.buffer).setUint32(0, n, false);
   return b;
 }
 
 export function u64be(n: bigint): Uint8Array {
-  if (n < 0n || n > 0xffffffffffffffffn) throw new RangeError(`u64be out of range: ${n}`);
+  if (n < 0n || n > 0xffffffffffffffffn)
+    throw new RangeError(`u64be out of range: ${n}`);
   const b = new Uint8Array(8);
   new DataView(b.buffer).setBigUint64(0, n, false);
   return b;
@@ -50,7 +52,9 @@ export function concatLP(...fields: Uint8Array[]): Uint8Array {
   return concat(...parts);
 }
 
-const _HEX: readonly string[] = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
+const _HEX: readonly string[] = Array.from({ length: 256 }, (_, i) =>
+  i.toString(16).padStart(2, '0'),
+);
 
 export function toHex(b: Uint8Array): string {
   let s = '';
@@ -64,7 +68,8 @@ export function fromHex(h: string): Uint8Array {
   if (h.length % 2 !== 0) throw new Error('hex length must be even');
   // Strictly canonical: reject uppercase, whitespace, sign, 0x/0o, and any non-hex char so the
   // transport is 1:1 (no malleable many-to-one decode such as "AB"/"ab" or parseInt's "-1"/"1g").
-  if (!CANONICAL_HEX.test(h)) throw new Error('invalid hex: non-canonical character');
+  if (!CANONICAL_HEX.test(h))
+    throw new Error('invalid hex: non-canonical character');
   const out = new Uint8Array(h.length / 2);
   for (let i = 0; i < out.length; i++) {
     out[i] = Number.parseInt(h.slice(i * 2, i * 2 + 2), 16);
