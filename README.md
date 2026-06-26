@@ -129,15 +129,19 @@ ISO/IEC 27001 and SOC 2 — alongside the AI-specific frameworks now taking shap
 the EU AI Act, the NIST AI Risk Management Framework and ISO/IEC 42001. Written
 for CISOs, DPOs, and anyone comparing AI-memory tools.
 
-## Two packages
+## Companion packages
 
 | Package                                                                | Use it for                                                                                                                      |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **`@saihm/client-pro`** (this package)                                 | Production client-side cryptography: sealing, opening, authenticated sharing, and provable erasure — performed on your machine. |
 | [`@saihm/mcp-server`](https://www.npmjs.com/package/@saihm/mcp-server) | The open MCP client that exposes the eight SAIHM tools to any MCP-capable AI agent.                                             |
 
+> Pair it with [`@saihm/mcp-server-pro`](https://www.npmjs.com/package/@saihm/mcp-server-pro) — the production, non-custodial **stdio MCP server** that seals every cell with this package, then stores ciphertext at the blind SAIHM endpoint.
+
 ## Learn more
 
+- **See it run — live demos:** <https://citw2.github.io/saihm-demos/> (offline, one command each, no account)
+- **Token benchmark** — bounded recall vs transcript-resend cut input tokens **62.8%–85.9%** (up to ~86%), open & reproducible: <https://github.com/citw2/saihm-token-benchmark>
 - [AI memory needs a standard](https://saihm.coti.global/blog/2026-05-18-ai-memory-needs-a-standard)
 - [What makes SAIHM different](https://saihm.coti.global/blog/2026-05-31-what-makes-saihm-different)
 - **Join the protocol — <https://saihm.coti.global>**
