@@ -25,14 +25,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # NOTE: deliberately NO registry-url — setup-node's registry-url writes an
+      # .npmrc with `_authToken=${NODE_AUTH_TOKEN}` (+ a placeholder token) that
+      # shadows OIDC. Omitting it leaves no auth line, so npm engages OIDC on the
+      # default registry (registry.npmjs.org). access:public comes from package.json.
       - uses: actions/setup-node@v6
         with:
           node-version: '24'            # >= 22.14.0 required for OIDC
-          registry-url: 'https://registry.npmjs.org'
-          package-manager-cache: false  # never cache in release builds; avoids empty-token .npmrc shadowing OIDC
 
       - name: Use npm >= 11.5.1 (required for OIDC trusted publishing)
-        run: npm install -g npm@latest
+        run: |
+          npm install -g npm@latest
+          echo "npm=$(npm -v)  node=$(node -v)"
 
       - name: Verify package version matches the release tag
         run: |
