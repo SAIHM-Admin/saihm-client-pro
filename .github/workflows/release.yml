@@ -54,4 +54,6 @@ jobs:
         run: npm test
 
       - name: Publish (OIDC trusted publishing — provenance is automatic)
+        env:
+          NODE_AUTH_TOKEN: ""   # clear setup-node's placeholder token so npm engages OIDC instead of bogus-token auth
         run: npm publish
