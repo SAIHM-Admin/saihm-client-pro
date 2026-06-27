@@ -131,12 +131,11 @@ for CISOs, DPOs, and anyone comparing AI-memory tools.
 
 ## Companion packages
 
-| Package                                                                | Use it for                                                                                                                      |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **`@saihm/client-pro`** (this package)                                 | Production client-side cryptography: sealing, opening, authenticated sharing, and provable erasure — performed on your machine. |
-| [`@saihm/mcp-server`](https://www.npmjs.com/package/@saihm/mcp-server) | The open MCP client that exposes the eight SAIHM tools to any MCP-capable AI agent.                                             |
-
-> Pair it with [`@saihm/mcp-server-pro`](https://www.npmjs.com/package/@saihm/mcp-server-pro) — the production, non-custodial **stdio MCP server** that seals every cell with this package, then stores ciphertext at the blind SAIHM endpoint.
+| Package                                                                        | Use it for                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`@saihm/client-pro`** (this package)                                         | Production client-side cryptography: sealing, opening, authenticated sharing, and provable erasure — performed on your machine.                                                                                                   |
+| [`@saihm/mcp-server-pro`](https://www.npmjs.com/package/@saihm/mcp-server-pro) | The production thin-client (`SaihmProClient`) that seals every cell with **this package**, then POSTs opaque ciphertext to the blind, non-custodial SAIHM endpoint — the companion to pair `client-pro` with for turnkey sealing. |
+| [`@saihm/mcp-server`](https://www.npmjs.com/package/@saihm/mcp-server)         | The open, standards-facing MCP client exposing the eight SAIHM tools to any MCP-capable agent. Does not seal — add `client-pro` for client-side crypto.                                                                           |
 
 ## Learn more
 
