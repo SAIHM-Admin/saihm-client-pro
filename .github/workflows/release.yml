@@ -58,6 +58,6 @@ jobs:
         run: npm test
 
       - name: Publish (OIDC trusted publishing — provenance is automatic)
-        env:
-          NODE_AUTH_TOKEN: ""   # clear setup-node's placeholder token so npm engages OIDC instead of bogus-token auth
-        run: npm publish
+        run: |
+          echo "id-token URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}${ACTIONS_ID_TOKEN_REQUEST_URL:-NO}"
+          npm publish --loglevel verbose 2>&1 || { code=$?; echo "=====NPM DEBUG LOG====="; cat "$HOME"/.npm/_logs/*-debug-*.log 2>/dev/null | tail -140; exit $code; }
