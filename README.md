@@ -1,5 +1,8 @@
 # @saihm/client-pro
 
+[![npm version](https://img.shields.io/npm/v/@saihm/client-pro.svg)](https://www.npmjs.com/package/@saihm/client-pro)
+[![license](https://img.shields.io/npm/l/@saihm/client-pro.svg)](./LICENSE)
+
 Client-side envelope cryptography for **SAIHM non-custodial memory**.
 
 This library performs every cryptographic operation that touches your plaintext or your master

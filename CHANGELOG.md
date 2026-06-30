@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-06-30
+
+Discovery and metadata release. No cryptographic, wire-format, or API change;
+the published JavaScript is behavior-identical to 0.1.4, and cells sealed by any
+prior 0.1.x open unchanged.
+
+### Added
+
+- npm `keywords` for agent-memory discovery (`ai-agents`, `mcp`,
+  `model-context-protocol`).
+- README npm-version and license badges.
+- `SECURITY.md` — coordinated vulnerability-disclosure policy and private
+  reporting channel (source tree only; not part of the published tarball).
+
+## [0.1.4] — 2026-06-27
+
+Metadata release. No cryptographic, wire-format, or API change.
+
+### Changed
+
+- Front-loaded the npm `description` so the key positioning survives npm's
+  truncated display.
+- First release published via GitHub OIDC trusted publishing (no long-lived
+  npm token).
+
+## [0.1.3] — 2026-06-27
+
+Documentation release. No cryptographic, wire-format, or API change.
+
+### Changed
+
+- README Companion table and npm `description` now name `@saihm/mcp-server-pro`
+  (the production sealing thin-client) as the package to pair `client-pro` with,
+  alongside the open `@saihm/mcp-server`.
+
+### Removed
+
+- Stray `.prettierrc.json` / `.prettierignore` carried in from another package
+  by mistake.
+
 ## [0.1.2] — 2026-06-25
 
 Additive API release. No wire-format, envelope, or HKDF-domain change; cells

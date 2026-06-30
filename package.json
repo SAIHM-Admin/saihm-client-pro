@@ -1,6 +1,6 @@
 {
   "name": "@saihm/client-pro",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Post-quantum (ML-DSA-65 / ML-KEM-768) client-side cryptography for SAIHM non-custodial agent memory — your keys never leave the client: per-cell AES-256-GCM, provable crypto-shred erasure (GDPR Art. 17), authenticated sharing with one-step revoke. One cell, many shapes (polymorphic). One memory layer for fleet-scale swarms of many agents — homogeneous or disparate — portable across every LLM client and surviving any single vendor's product changes. Pairs with @saihm/mcp-server-pro (the production sealing thin-client). Join the protocol at saihm.coti.global.",
   "type": "module",
   "main": "dist/index.js",
@@ -36,7 +36,10 @@
     "agent-memory",
     "gdpr",
     "crypto-shred",
-    "polymorphic-memory"
+    "polymorphic-memory",
+    "ai-agents",
+    "mcp",
+    "model-context-protocol"
   ],
   "license": "Apache-2.0",
   "author": "SAIHM",
