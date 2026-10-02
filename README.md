@@ -5,6 +5,8 @@
 
 Client-side envelope cryptography for **SAIHM non-custodial memory**.
 
+**New to SAIHM?** [Watch the 6-minute overview](https://saihm.net/overview) (captions and transcript), or [read the SAIHM manual (PDF)](https://saihm.net/manual).
+
 This library performs every cryptographic operation that touches your plaintext or your master
 secret **on the client**. SAIHM's runtime stores, anchors, shares, and bills over the resulting
 ciphertext **blind** — it never holds your keys and cannot read your memory.
