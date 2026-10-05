@@ -144,8 +144,8 @@ for CISOs, DPOs, and anyone comparing AI-memory tools.
 
 ## Learn more
 
-- **See it run — live demos:** <https://citw2.github.io/saihm-demos/> (offline, one command each, no account)
-- **Token benchmark** — bounded recall vs transcript-resend cut input tokens **62.8%–85.9%** (up to ~86%), open & reproducible: <https://github.com/citw2/saihm-token-benchmark>
+- **See it run — live demos:** <https://saihm-admin.github.io/saihm-demos/> (offline, one command each, no account)
+- **Token benchmark** — bounded recall vs transcript-resend cut input tokens **62.8%–85.9%** (up to ~86%), open & reproducible: <https://github.com/SAIHM-Admin/saihm-token-benchmark>
 - [AI memory needs a standard](https://saihm.coti.global/blog/2026-05-18-ai-memory-needs-a-standard)
 - [What makes SAIHM different](https://saihm.coti.global/blog/2026-05-31-what-makes-saihm-different)
 - **Join the protocol — <https://saihm.coti.global>**
